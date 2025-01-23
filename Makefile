@@ -10,8 +10,8 @@ SRC_DIR := src
 BIN_DIR := bin
 
 # Include and linking flags
-INCLUDES := -I ./src/
-LIBRARIES := -lraylib
+INCLUDES := -I ./src/ -I ./src/ext/
+LIBRARIES := -lglfw -lm
 
 # Source files and object files
 SOURCES := $(shell find $(SRC_DIR) -name '*.c')

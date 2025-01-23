@@ -21,6 +21,7 @@ CMakeLists.txt.local
 *.qmake.stash
 *.user
 *.userprefs
+.clangd
 
 # Ignore temporary files created by editors
 *~
@@ -74,3 +75,4 @@ conanbuildinfo.txt
 
 **/libs/
 assets/
+src/ext/
