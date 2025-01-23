@@ -1,7 +1,6 @@
 #include <cglm/cglm.h>
 #include <cglm/types.h>
 
-
 // // Mesh, vertex data and vao/vbo
 // typedef struct Mesh {
 // 	int vertexCount; // Number of vertices stored in arrays
@@ -28,12 +27,6 @@
 // 	unsigned int vaoId; // OpenGL Vertex Array Object id
 // 	unsigned int* vboId; // OpenGL Vertex Buffer Objects id (default vertex data)
 // } Mesh;
-// // Shader
-// typedef struct Shader {
-// 	unsigned int id; // Shader program id
-// 	int* locs; // Shader locations array (RL_MAX_SHADER_LOCATIONS)
-// } Shader;
-//
 // // Texture, tex data stored in GPU memory (VRAM)
 // typedef struct Texture {
 // 	unsigned int id; // OpenGL texture id

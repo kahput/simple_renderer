@@ -1,4 +1,5 @@
 #include "defines.h"
+#include "renderer.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -22,9 +23,10 @@ const char* vertex_shader_source =
 const char* fragment_shader_source =
 		"#version 450 core\n"
 		"out vec4 fragment_color;\n"
+		"uniform vec4 u_color;\n"
 		"void main()\n"
 		"{\n"
-		"   fragment_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+		"   fragment_color = vec4(u_color);\n"
 		"}\0";
 int main(void) {
 	/**
@@ -90,42 +92,7 @@ int main(void) {
 	 * ===========================================================================================
 	 **/
 
-	uint32_t vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-	glCompileShader(vertex_shader);
-
-	int32_t success;
-	char info_buffer[512];
-	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-
-	if (!success) {
-		glGetShaderInfoLog(vertex_shader, 512, NULL, info_buffer);
-		printf("ERROR:SHADER:VERTEX:COMPILATION_FAILED | %s\n", info_buffer);
-	}
-
-	uint32_t fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-	glCompileShader(fragment_shader);
-
-	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-
-	if (!success) {
-		glGetShaderInfoLog(fragment_shader, 512, NULL, info_buffer);
-		printf("ERROR:SHADER:FRAGMENT:COMPILATION_FAILED | %s\n", info_buffer);
-	}
-
-	uint32_t program = glCreateProgram();
-	glAttachShader(program, vertex_shader);
-	glAttachShader(program, fragment_shader);
-	glLinkProgram(program);
-	glGetProgramiv(program, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(program, 512, NULL, info_buffer);
-		printf("ERROR:SHADER:LINKING_FAILED | %s\n", info_buffer);
-	}
-
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
+	Shader* shader = renderer_shader_str(vertex_shader_source, fragment_shader_source, NULL);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -134,14 +101,17 @@ int main(void) {
 		glClearColor(0.95f, .95f, .95f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glBindVertexArray(vertex_array_object);
-		glUseProgram(program);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		float time = glfwGetTime();
+		vec4 u_color = { (cos(time) / 2.f) + .5f, (sin(time) / 2.f) + .5f, 0.0f, 1.0f };
 
-		glBindVertexArray(0);
-		glUseProgram(0);
+		glBindVertexArray(vertex_array_object);
+		renderer_shader_activate(shader);
+		renderer_shader_set4fv(shader, "u_color", u_color);
+
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	}
 
+	renderer_shader_destroy(shader);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
