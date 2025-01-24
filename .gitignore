@@ -74,5 +74,4 @@ conanbuildinfo.cmake
 conanbuildinfo.txt
 
 **/libs/
-assets/
 src/ext/

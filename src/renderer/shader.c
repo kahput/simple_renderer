@@ -5,15 +5,49 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_READ_SIZE 1024
+
 struct _shader {
 	uint32_t id; // Shader program id
 	int32_t* locations; // TODO: Use this
 };
 
-Shader* renderer_shader_file(const char* vertex_shader_path, const char* fragment_shader_path, const char* geometry_shader_path) {
-	return NULL;
+Shader* renderer_shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path, const char* geometry_shader_path) {
+
+	// Vertex shader
+	FILE* file_ptr = fopen(vertex_shader_path, "r");
+	if (!file_ptr) {
+		printf("ERROR:SHADER:VERTEX:FILE_NOT_FOUND\n");
+		return NULL;
+	}
+
+	fseek(file_ptr, 0, SEEK_END);
+	uint32_t length = ftell(file_ptr);
+	char vertex_shader_source[length + 1];
+	fseek(file_ptr, 0, SEEK_SET);
+	fread(vertex_shader_source, 1, length, file_ptr);
+	fclose(file_ptr);
+	vertex_shader_source[length] = '\0';
+
+	// Fragment shader
+	file_ptr = fopen(fragment_shader_path, "r");
+	if (!file_ptr) {
+		printf("ERROR:SHADER:FRAGMENT:FILE_NOT_FOUND\n");
+		return NULL;
+	}
+
+	fseek(file_ptr, 0, SEEK_END);
+	length = ftell(file_ptr);
+	char fragment_shader_source[length + 1];
+	fseek(file_ptr, 0, SEEK_SET);
+	fread(fragment_shader_source, 1, length, file_ptr);
+	fclose(file_ptr);
+	fragment_shader_source[length] = '\0';
+
+	return renderer_shader_from_string(vertex_shader_source, fragment_shader_source, NULL);
 }
-Shader* renderer_shader_str(const char* vertex_shader_source, const char* fragment_shader_source, const char* geometry_shader_source) {
+
+Shader* renderer_shader_from_string(const char* vertex_shader_source, const char* fragment_shader_source, const char* geometry_shader_source) {
 	Shader* shader = malloc(sizeof(struct _shader));
 	uint32_t vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);

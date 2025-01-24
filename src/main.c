@@ -12,22 +12,6 @@
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
-const char* vertex_shader_source =
-		"#version 450 core\n"
-		"layout (location = 0) in vec3 attrib_position;\n"
-		"void main()\n"
-		"{\n"
-		"   gl_Position = vec4(attrib_position, 1.0);\n"
-		"}\0";
-
-const char* fragment_shader_source =
-		"#version 450 core\n"
-		"out vec4 fragment_color;\n"
-		"uniform vec4 u_color;\n"
-		"void main()\n"
-		"{\n"
-		"   fragment_color = vec4(u_color);\n"
-		"}\0";
 int main(void) {
 	/**
 	 * ===========================================================================================
@@ -91,8 +75,7 @@ int main(void) {
 	 * -------- Shader creation
 	 * ===========================================================================================
 	 **/
-
-	Shader* shader = renderer_shader_str(vertex_shader_source, fragment_shader_source, NULL);
+	Shader* shader = renderer_shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
 
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();

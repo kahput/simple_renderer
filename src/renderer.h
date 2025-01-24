@@ -6,8 +6,8 @@
 
 typedef struct _shader Shader;
 
-Shader* renderer_shader_file(const char* vertex_shader_path, const char* fragment_shader_path, const char* geometry_shader_source);
-Shader* renderer_shader_str(const char* vertex_shader_source, const char* fragment_shader_source, const char* geometry_shader_source);
+Shader* renderer_shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path, const char* geometry_shader_source);
+Shader* renderer_shader_from_string(const char* vertex_shader_source, const char* fragment_shader_source, const char* geometry_shader_source);
 void renderer_shader_destroy(Shader* shader);
 
 void renderer_shader_activate(Shader* shader);
