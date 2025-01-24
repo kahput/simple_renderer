@@ -3,6 +3,7 @@
 #include <cglm/affine-pre.h>
 #include <cglm/affine.h>
 #include <cglm/mat4.h>
+#include <cglm/types.h>
 #include <cglm/util.h>
 
 #define GLAD_GL_IMPLEMENTATION
@@ -35,6 +36,8 @@ int main(void) {
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
 
+	glEnable(GL_DEPTH_TEST);
+
 	/**
 	 * ===========================================================================================
 	 * -------- Vertex array object creation
@@ -43,15 +46,52 @@ int main(void) {
 
 	// clang-format off
 	float vertices[] = {
-		 0.5f,  0.5f, 0.0f, 1.0f, 1.0f,  // top right
-		 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,  // bottom right
-		-0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bottom left
-		-0.5f,  0.5f, 0.0f, 0.0f, 1.0f // top left 
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
-	uint32_t indices[] = {
-		0, 1, 3,   // first triangle
-		1, 2, 3    // second triangle
-	};
+	// uint32_t indices[] = {
+	// 	0, 1, 3,   // first triangle
+	// 	1, 2, 3    // second triangle
+	// };
 	// clang-format on
 
 	// Create vertex array object
@@ -72,15 +112,15 @@ int main(void) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * (sizeof *vertices), (void*)(3 * (sizeof *vertices)));
 	glEnableVertexAttribArray(1);
 
-	uint32_t index_buffer_object = 0;
-	glGenBuffers(1, &index_buffer_object);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	// uint32_t index_buffer_object = 0;
+	// glGenBuffers(1, &index_buffer_object);
+	//
+	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
+	// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	/**
 	 * ===========================================================================================
@@ -136,26 +176,58 @@ int main(void) {
 	renderer_shader_seti(shader, "u_texture_1", 0);
 	renderer_shader_seti(shader, "u_texture_2", 1);
 
+	/**
+	 * ===========================================================================================
+	 * -------- Math
+	 * ===========================================================================================
+	 **/
+
+	vec3 positions[] = {
+		{ 0.0f, 0.0f, 0.0f },
+		{ 2.0f, 5.0f, -15.0f },
+		{ -1.5f, -2.2f, -2.5f },
+		{ -3.8f, -2.0f, -12.3f },
+		{ 2.4f, -0.4f, -3.5f },
+		{ -1.7f, 3.0f, -7.5f },
+		{ 1.3f, -2.0f, -2.5f },
+		{ 1.5f, 2.0f, -2.5f },
+		{ 1.5f, 0.2f, -1.5f },
+		{ -1.3f, 1.0f, -1.5f }
+	};
+
+	mat4 model, view, projection;
+
+	glm_mat4_identity(model);
+	glm_rotate(model, glm_rad(-55.0f), (vec3){ 1.0f, 0.0f, 0.0f });
+
+	glm_mat4_identity(view);
+	glm_translate(view, (vec3){ 0.0f, 0.0f, -5.0f });
+
+	glm_mat4_identity(projection);
+	glm_perspective(glm_rad(45.f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f, projection);
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 
+		GLFW_RELEASE;
+		vec2 camera_movement = {
+			(glfwGetKey(window, GLFW_KEY_A) % 2) - (glfwGetKey(window, GLFW_KEY_D) % 2),
+			(glfwGetKey(window, GLFW_KEY_W) % 2) - (glfwGetKey(window, GLFW_KEY_S) % 2)
+
+		};
+
+		glm_translate(view, (vec3){ camera_movement[0] * 0.2f, 0.0f, camera_movement[1] * 0.2f });
+
 		glClearColor(0.95f, .95f, .95f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		float time = glfwGetTime();
 		vec4 u_color = { (cos(time) / 2.f) + .5f, (sin(time) / 2.f) + .5f, 0.0f, 1.0f };
 
-		mat4 transform;
-		glm_mat4_identity(transform);
-
-		glm_translate(transform, (vec3){ 0.5f, -0.5f, 0.0f });
-		glm_rotate(transform, (float)glfwGetTime(), (vec3){ 0.0f, 0.0f, 1.0f });
-
 		renderer_shader_set4fv(shader, "u_color", u_color);
-		renderer_shader_set4fm(shader, "u_transform_matrix", transform);
-
-		glBindVertexArray(vertex_array_object);
+		renderer_shader_set4fm(shader, "u_view", view);
+		renderer_shader_set4fm(shader, "u_projection", projection);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture[0]);
@@ -163,7 +235,16 @@ int main(void) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture[1]);
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(vertex_array_object);
+		for (int i = 0; i < (sizeof(positions) / sizeof *positions); i++) {
+			glm_mat4_identity(model);
+			glm_translate(model, positions[i]);
+			float angle = 20 * i;
+			glm_rotate(model, glm_rad(angle), (vec3){ 1.0f, 0.3f, 0.5f });
+			renderer_shader_set4fm(shader, "u_model", model);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
 
 		glBindVertexArray(0);
 	}
