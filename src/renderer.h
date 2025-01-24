@@ -18,4 +18,4 @@ void renderer_shader_setf(Shader* shader, const char* name, float value);
 void renderer_shader_set2fv(Shader* shader, const char* name, float* value);
 void renderer_shader_set3fv(Shader* shader, const char* name, float* value);
 void renderer_shader_set4fv(Shader* shader, const char* name, float* value);
-void renderer_shader_set4fm(Shader* shader, const char* name, float* value);
+void renderer_shader_set4fm(Shader* shader, const char* name, float value[4][4]);

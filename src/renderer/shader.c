@@ -13,11 +13,10 @@ struct _shader {
 };
 
 Shader* renderer_shader_from_file(const char* vertex_shader_path, const char* fragment_shader_path, const char* geometry_shader_path) {
-
 	// Vertex shader
 	FILE* file_ptr = fopen(vertex_shader_path, "r");
 	if (!file_ptr) {
-		printf("ERROR:SHADER:VERTEX:FILE_NOT_FOUND\n");
+		printf("ERROR:VERTEX:SHADER:FILE [ %s ] NOT_FOUND\n", vertex_shader_path);
 		return NULL;
 	}
 
@@ -32,7 +31,7 @@ Shader* renderer_shader_from_file(const char* vertex_shader_path, const char* fr
 	// Fragment shader
 	file_ptr = fopen(fragment_shader_path, "r");
 	if (!file_ptr) {
-		printf("ERROR:SHADER:FRAGMENT:FILE_NOT_FOUND\n");
+		printf("ERROR:FRAGMENT:SHADER:FILE [ %s ] NOT_FOUND\n", fragment_shader_path);
 		return NULL;
 	}
 
@@ -104,7 +103,9 @@ void renderer_shader_deactivate(Shader* shader) {
 	glUseProgram(0);
 }
 
-void renderer_shader_seti(Shader* shader, const char* name, int32_t value) {}
+void renderer_shader_seti(Shader* shader, const char* name, int32_t value) {
+	glUniform1i(glGetUniformLocation(shader->id, name), value);
+}
 void renderer_shader_setf(Shader* shader, const char* name, float value) {
 	glUniform1f(glGetUniformLocation(shader->id, name), value);
 }
@@ -117,5 +118,6 @@ void renderer_shader_set3fv(Shader* shader, const char* name, float* value) {
 void renderer_shader_set4fv(Shader* shader, const char* name, float* value) {
 	glUniform4fv(glGetUniformLocation(shader->id, name), 1, value);
 }
-void renderer_shader_set4fm(Shader* shader, const char* name, float* value) {
+void renderer_shader_set4fm(Shader* shader, const char* name, float value[4][4]) {
+	glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE, (float*)value);
 }
