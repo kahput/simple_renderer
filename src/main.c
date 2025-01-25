@@ -2,9 +2,11 @@
 #include "renderer.h"
 #include <cglm/affine-pre.h>
 #include <cglm/affine.h>
+#include <cglm/cam.h>
 #include <cglm/mat4.h>
 #include <cglm/types.h>
 #include <cglm/util.h>
+#include <cglm/vec3.h>
 
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/gl.h>
@@ -19,6 +21,12 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
+
+#define Min(a, b) (((a) < (b)) ? a : b)
+#define Max(a, b) (((a) > (b)) ? a : b)
+
+void get_mouse_offset(GLFWwindow* window, float* x_offset, float* y_offset);
+void mouse_callback(GLFWwindow* window, double x, double y);
 
 int main(void) {
 	/**
@@ -35,6 +43,8 @@ int main(void) {
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "3D Noise", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -206,18 +216,55 @@ int main(void) {
 	glm_mat4_identity(projection);
 	glm_perspective(glm_rad(45.f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f, projection);
 
+	/**
+	 * ===========================================================================================
+	 * -------- Camera
+	 * ===========================================================================================
+	 **/
+
+	vec3 camera_position = { 0.f, 0.f, 5.0f }, camera_up = { 0.0f, 1.0f, 0.0f }, camera_front = { 0.0f, 0.0f, -1.0f }, camera_right = { 1.0f, 0.0f, 0.0f };
+	float yaw = -90.0f, pitch = 0.0f;
+	float camera_speed = 5.0f;
+
+	float delta_time = 0.0f;
+	float last_frame = 0.0f;
+
 	while (!glfwWindowShouldClose(window)) {
+		float current_frame = glfwGetTime();
+		delta_time = current_frame - last_frame;
+		last_frame = current_frame;
+
+		float x_offset = 0.0f, y_offset = 0.0f;
+		get_mouse_offset(window, &x_offset, &y_offset);
+
+		const float sensitivity = 2.f;
+
+		yaw += x_offset * delta_time * 2.f;
+		pitch += y_offset * delta_time * 2.f;
+		pitch = Max(-89.0f, Min(89.0f, pitch));
+
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 
-		GLFW_RELEASE;
-		vec2 camera_movement = {
-			(glfwGetKey(window, GLFW_KEY_A) % 2) - (glfwGetKey(window, GLFW_KEY_D) % 2),
+		vec3 camera_movement = {
+			(glfwGetKey(window, GLFW_KEY_D) % 2) - (glfwGetKey(window, GLFW_KEY_A) % 2),
+			0.0f,
 			(glfwGetKey(window, GLFW_KEY_W) % 2) - (glfwGetKey(window, GLFW_KEY_S) % 2)
-
 		};
 
-		glm_translate(view, (vec3){ camera_movement[0] * 0.2f, 0.0f, camera_movement[1] * 0.2f });
+		glm_mat4_identity(view);
+
+		camera_front[0] = cos(glm_rad(yaw)) * cos(glm_rad(pitch));
+		camera_front[1] = sin(glm_rad(pitch));
+		camera_front[2] = sin(glm_rad(yaw)) * cos(glm_rad(pitch));
+
+		glm_cross(camera_front, camera_up, camera_right);
+		glm_normalize(camera_right);
+
+		glm_vec3_muladds(camera_right, camera_movement[0] * delta_time * camera_speed, camera_position);
+		glm_vec3_muladds(camera_front, camera_movement[2] * delta_time * camera_speed, camera_position);
+
+		glm_look(camera_position, camera_front, camera_up, view);
 
 		glClearColor(0.95f, .95f, .95f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -253,4 +300,28 @@ int main(void) {
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
+}
+
+void get_mouse_offset(GLFWwindow* window, float* x_offset, float* y_offset) {
+	static bool first_frame = true;
+	static double last_position_x = 0.0f, last_position_y = 0.0f;
+
+	double current_position_x, current_position_y;
+	glfwGetCursorPos(window, &current_position_x, &current_position_y);
+
+	if (first_frame) {
+		last_position_x = current_position_x;
+		last_position_y = current_position_y;
+		first_frame = false;
+		return;
+	}
+
+	*x_offset = current_position_x - last_position_x;
+	*y_offset = last_position_y - current_position_y;
+
+	last_position_x = current_position_x;
+	last_position_y = current_position_y;
+}
+
+void mouse_callback(GLFWwindow* window, double x, double y) {
 }
