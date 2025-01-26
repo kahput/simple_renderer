@@ -118,6 +118,6 @@ void renderer_shader_set3fv(Shader* shader, const char* name, float* value) {
 void renderer_shader_set4fv(Shader* shader, const char* name, float* value) {
 	glUniform4fv(glGetUniformLocation(shader->id, name), 1, value);
 }
-void renderer_shader_set4fm(Shader* shader, const char* name, float value[4][4]) {
-	glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE, (float*)value);
+void renderer_shader_set4fm(Shader* shader, const char* name, float* value) {
+	glUniformMatrix4fv(glGetUniformLocation(shader->id, name), 1, GL_FALSE, value);
 }

@@ -1,12 +1,4 @@
-#include "defines.h"
 #include "renderer.h"
-#include <cglm/affine-pre.h>
-#include <cglm/affine.h>
-#include <cglm/cam.h>
-#include <cglm/mat4.h>
-#include <cglm/types.h>
-#include <cglm/util.h>
-#include <cglm/vec3.h>
 
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/gl.h>
@@ -19,7 +11,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define WINDOW_WIDTH 800
+#define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
 
 #define Min(a, b) (((a) < (b)) ? a : b)
@@ -222,7 +214,11 @@ int main(void) {
 	 * ===========================================================================================
 	 **/
 
-	vec3 camera_position = { 0.f, 0.f, 5.0f }, camera_up = { 0.0f, 1.0f, 0.0f }, camera_front = { 0.0f, 0.0f, -1.0f }, camera_right = { 1.0f, 0.0f, 0.0f };
+	Camera* camera = camera_create();
+	camera_set_perspective(camera, glm_rad(45.0f), 0.1f, 100.f);
+
+	vec3 camera_position = { 0.f, 0.f, 5.0f },
+		 camera_up = { 0.0f, 1.0f, 0.0f }, camera_front = { 0.0f, 0.0f, -1.0f }, camera_right = { 1.0f, 0.0f, 0.0f };
 	float yaw = -90.0f, pitch = 0.0f;
 	float camera_speed = 5.0f;
 
@@ -237,10 +233,10 @@ int main(void) {
 		float x_offset = 0.0f, y_offset = 0.0f;
 		get_mouse_offset(window, &x_offset, &y_offset);
 
-		const float sensitivity = 2.f;
+		const float sensitivity = 4.f;
 
-		yaw += x_offset * delta_time * 2.f;
-		pitch += y_offset * delta_time * 2.f;
+		yaw += x_offset * delta_time * sensitivity;
+		pitch += y_offset * delta_time * sensitivity;
 		pitch = Max(-89.0f, Min(89.0f, pitch));
 
 		glfwPollEvents();
@@ -264,7 +260,7 @@ int main(void) {
 		glm_vec3_muladds(camera_right, camera_movement[0] * delta_time * camera_speed, camera_position);
 		glm_vec3_muladds(camera_front, camera_movement[2] * delta_time * camera_speed, camera_position);
 
-		glm_look(camera_position, camera_front, camera_up, view);
+		camera_update(camera, camera_position, camera_front, camera_up);
 
 		glClearColor(0.95f, .95f, .95f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -273,8 +269,8 @@ int main(void) {
 		vec4 u_color = { (cos(time) / 2.f) + .5f, (sin(time) / 2.f) + .5f, 0.0f, 1.0f };
 
 		renderer_shader_set4fv(shader, "u_color", u_color);
-		renderer_shader_set4fm(shader, "u_view", view);
-		renderer_shader_set4fm(shader, "u_projection", projection);
+		renderer_shader_set4fm(shader, "u_view", camera_fetch_view(camera));
+		renderer_shader_set4fm(shader, "u_projection", camera_fetch_projection(camera));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture[0]);
@@ -288,7 +284,7 @@ int main(void) {
 			glm_translate(model, positions[i]);
 			float angle = 20 * i;
 			glm_rotate(model, glm_rad(angle), (vec3){ 1.0f, 0.3f, 0.5f });
-			renderer_shader_set4fm(shader, "u_model", model);
+			renderer_shader_set4fm(shader, "u_model", (float*)model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
