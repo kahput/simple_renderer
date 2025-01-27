@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef enum {
@@ -10,9 +11,12 @@ typedef enum {
 	BACKEND_COUNT
 } RendererAPI;
 
-typedef struct _renderer_create_info {
-	const char** (*extension_info)(uint32_t* count);
-} RendererCreateInfo;
+typedef enum {
+	BUFFER_USAGE_VERTEX,
+	BUFFER_USAGE_INDEX,
+
+	BUFFER_USAGE_COUNT
+} BufferUsage;
 
 typedef enum {
 	PROJECTION_PERSPECTIVE,
@@ -20,8 +24,19 @@ typedef enum {
 	PROJECTION_FRUSTUM
 } ProjectionType;
 
-typedef struct _shader Shader;
+typedef void Shader;
+typedef void Buffer;
 typedef struct _camera Camera;
+
+typedef struct _renderer_create_info {
+	const char** (*extension_info)(uint32_t* count);
+} RendererCreateInfo;
+
+typedef struct _buffer_create_info {
+	BufferUsage usage;
+	size_t size;
+	void* data;
+} BufferCreateInfo;
 
 /*
  * ===========================================================================================
@@ -34,8 +49,11 @@ typedef struct _renderer {
 	void (*frame_end)(struct _renderer* self);
 
 	// Buffers
-	void (*buffer_create)(struct _renderer* self);
-	void (*buffer_destroy)(struct _renderer* self);
+	Buffer *(*buffer_create)(struct _renderer* self, const BufferCreateInfo* buffer);
+	void (*buffer_destroy)(struct _renderer* self, Buffer* buffer);
+
+	void (*buffer_activate)(struct _renderer* self, const Buffer* buffer);
+	void (*buffer_deactivate)(struct _renderer* self, const Buffer* buffer);
 
 	// Shaders
 	Shader* (*shader_from_file)(const char* vertex_shader_path, const char* fragment_shader_path, const char* geometry_shader_source);

@@ -1,8 +1,19 @@
 #pragma once
+#include "renderer.h"
 
 #include <stdint.h>
 
-typedef struct _shader Shader;
+/*
+ * ===========================================================================================
+ * -------- Buffer
+ * ===========================================================================================
+ **/
+
+Buffer* opengl_buffer_create(struct _renderer* self, const BufferCreateInfo* buffer);
+void opengl_buffer_destroy(struct _renderer* self, Buffer* buffer);
+
+void opengl_buffer_activate(struct _renderer* self, const Buffer* buffer);
+void opengl_buffer_deactivate(struct _renderer* self, const Buffer* buffer);
 
 /*
  * ===========================================================================================

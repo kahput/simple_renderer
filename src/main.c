@@ -17,8 +17,9 @@
 #define Min(a, b) (((a) < (b)) ? a : b)
 #define Max(a, b) (((a) > (b)) ? a : b)
 
+void generate_cube_vertices(float* vertices);
+
 void get_mouse_offset(GLFWwindow* window, float* x_offset, float* y_offset);
-void mouse_callback(GLFWwindow* window, double x, double y);
 
 int main(void) {
 	/**
@@ -40,61 +41,16 @@ int main(void) {
 
 	glEnable(GL_DEPTH_TEST);
 
+	Renderer* gl_renderer = renderer_create(BACKEND_API_OPENGL, NULL);
+	// Renderer* vk_renderer = renderer_create(BACKEND_API_VULKAN, &(RendererCreateInfo){ .extension_info = glfwGetRequiredInstanceExtensions });
+
 	/**
 	 * ===========================================================================================
 	 * -------- Vertex array object creation
 	 * ===========================================================================================
 	 **/
-
-	// clang-format off
-	float vertices[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-	};
-	// uint32_t indices[] = {
-	// 	0, 1, 3,   // first triangle
-	// 	1, 2, 3    // second triangle
-	// };
-	// clang-format on
+	float vertices[36 * 5];
+	generate_cube_vertices(vertices);
 
 	// Create vertex array object
 	uint32_t vertex_array_object = 0;
@@ -102,27 +58,22 @@ int main(void) {
 	glBindVertexArray(vertex_array_object);
 
 	// Create Vertex buffer object
-	uint32_t vertex_buffer_object = 0;
-	glGenBuffers(1, &vertex_buffer_object);
+	BufferCreateInfo buffer_info = {
+		.usage = BUFFER_USAGE_VERTEX,
+		.data = vertices,
+		.size = sizeof(vertices),
+	};
+	Buffer* vertex_buffer = gl_renderer->buffer_create(gl_renderer, &buffer_info);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
+	gl_renderer->buffer_activate(gl_renderer, vertex_buffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * (sizeof *vertices), (void*)NULL);
 	glEnableVertexAttribArray(0);
 
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * (sizeof *vertices), (void*)(3 * (sizeof *vertices)));
 	glEnableVertexAttribArray(1);
 
-	// uint32_t index_buffer_object = 0;
-	// glGenBuffers(1, &index_buffer_object);
-	//
-	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_object);
-	// glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
 	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	gl_renderer->buffer_deactivate(gl_renderer, vertex_buffer);
 
 	/**
 	 * ===========================================================================================
@@ -168,17 +119,15 @@ int main(void) {
 	stbi_image_free(data);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	Renderer* ogl_renderer = renderer_create(BACKEND_API_OPENGL, NULL);
-	// Renderer* vk_renderer = renderer_create(BACKEND_API_VULKAN, &(RendererCreateInfo){ .extension_info = glfwGetRequiredInstanceExtensions });
 	/**
 	 * ===========================================================================================
 	 * -------- Shader creation
 	 * ===========================================================================================
 	 **/
-	Shader* shader = ogl_renderer->shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
-	ogl_renderer->shader_activate(shader);
-	ogl_renderer->shader_seti(shader, "u_texture_1", 0);
-	ogl_renderer->shader_seti(shader, "u_texture_2", 1);
+	Shader* shader = gl_renderer->shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
+	gl_renderer->shader_activate(shader);
+	gl_renderer->shader_seti(shader, "u_texture_1", 0);
+	gl_renderer->shader_seti(shader, "u_texture_2", 1);
 
 	/**
 	 * ===========================================================================================
@@ -270,9 +219,9 @@ int main(void) {
 		float time = glfwGetTime();
 		vec4 u_color = { (cos(time) / 2.f) + .5f, (sin(time) / 2.f) + .5f, 0.0f, 1.0f };
 
-		ogl_renderer->shader_set4fv(shader, "u_color", u_color);
-		ogl_renderer->shader_set4fm(shader, "u_view", camera_get_view(camera));
-		ogl_renderer->shader_set4fm(shader, "u_projection", camera_get_projection(camera));
+		gl_renderer->shader_set4fv(shader, "u_color", u_color);
+		gl_renderer->shader_set4fm(shader, "u_view", camera_get_view(camera));
+		gl_renderer->shader_set4fm(shader, "u_projection", camera_get_projection(camera));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture[0]);
@@ -286,7 +235,7 @@ int main(void) {
 			glm_translate(model, positions[i]);
 			float angle = 20 * i;
 			glm_rotate(model, glm_rad(angle), (vec3){ 1.0f, 0.3f, 0.5f });
-			ogl_renderer->shader_set4fm(shader, "u_model", (float*)model);
+			gl_renderer->shader_set4fm(shader, "u_model", (float*)model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
@@ -294,8 +243,8 @@ int main(void) {
 		glBindVertexArray(0);
 	}
 
-	ogl_renderer->shader_destroy(shader);
-	renderer_destroy(ogl_renderer);
+	gl_renderer->shader_destroy(shader);
+	renderer_destroy(gl_renderer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
@@ -322,5 +271,63 @@ void get_mouse_offset(GLFWwindow* window, float* x_offset, float* y_offset) {
 	last_position_y = current_position_y;
 }
 
-void mouse_callback(GLFWwindow* window, double x, double y) {
+void generate_cube_vertices(float* vertices) {
+	int vertexIndex = 0;
+
+	// Define the positions of the cube corners relative to the center (0,0,0)
+	float cubeCorners[8][3] = {
+		{ -0.5f, -0.5f, -0.5f }, // 0: Back Bottom Left (BBL)
+		{ 0.5f, -0.5f, -0.5f }, // 1: Back Bottom Right (BBR)
+		{ 0.5f, 0.5f, -0.5f }, // 2: Back Top Right (BTR)
+		{ -0.5f, 0.5f, -0.5f }, // 3: Back Top Left (BTL)
+		{ -0.5f, -0.5f, 0.5f }, // 4: Front Bottom Left (FBL)
+		{ 0.5f, -0.5f, 0.5f }, // 5: Front Bottom Right (FBR)
+		{ 0.5f, 0.5f, 0.5f }, // 6: Front Top Right (FTR)
+		{ -0.5f, 0.5f, 0.5f } // 7: Front Top Left (FTL)
+	};
+
+	// Define texture coordinates for each vertex in a face (consistent for all faces)
+	float textureCoords[4][2] = {
+		{ 0.0f, 0.0f }, // Bottom Left (BL)
+		{ 1.0f, 0.0f }, // Bottom Right (BR)
+		{ 1.0f, 1.0f }, // Top Right (TR)
+		{ 0.0f, 1.0f } // Top Left (TL)
+	};
+
+	// Define the vertex indices for each face, in counter-clockwise order for each triangle
+	int faceIndices[6][6] = {
+		{ 0, 1, 2, 2, 3, 0 }, // Back face
+		{ 4, 5, 6, 6, 7, 4 }, // Front face
+		{ 7, 3, 0, 0, 4, 7 }, // Left face
+		{ 1, 5, 6, 6, 2, 1 }, // Right face
+		{ 0, 1, 5, 5, 4, 0 }, // Bottom face
+		{ 3, 2, 6, 6, 7, 3 } // Top face
+	};
+
+	// Loop through each face of the cube (6 faces)
+	for (int faceIndex = 0; faceIndex < 6; faceIndex++) {
+		// Loop through the 6 vertices for each face (2 triangles)
+		for (int vertexInFace = 0; vertexInFace < 6; vertexInFace++) {
+			int cornerIndex = faceIndices[faceIndex][vertexInFace];
+
+			// Vertex position (x, y, z)
+			vertices[vertexIndex++] = cubeCorners[cornerIndex][0];
+			vertices[vertexIndex++] = cubeCorners[cornerIndex][1];
+			vertices[vertexIndex++] = cubeCorners[cornerIndex][2];
+
+			// Texture coordinates (u, v)
+			int textureCoordIndex;
+			if (vertexInFace == 0 || vertexInFace == 5)
+				textureCoordIndex = 0; // BL
+			else if (vertexInFace == 1)
+				textureCoordIndex = 1; // BR
+			else if (vertexInFace == 2 || vertexInFace == 3)
+				textureCoordIndex = 2; // TR
+			else
+				textureCoordIndex = 3; // vertexInFace == 4, TL
+
+			vertices[vertexIndex++] = textureCoords[textureCoordIndex][0]; // u
+			vertices[vertexIndex++] = textureCoords[textureCoordIndex][1]; // v
+		}
+	}
 }
