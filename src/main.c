@@ -168,15 +168,17 @@ int main(void) {
 	stbi_image_free(data);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	Renderer* ogl_renderer = renderer_create(BACKEND_API_OPENGL, NULL);
+	// Renderer* vk_renderer = renderer_create(BACKEND_API_VULKAN, &(RendererCreateInfo){ .extension_info = glfwGetRequiredInstanceExtensions });
 	/**
 	 * ===========================================================================================
 	 * -------- Shader creation
 	 * ===========================================================================================
 	 **/
-	Shader* shader = renderer_shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
-	renderer_shader_activate(shader);
-	renderer_shader_seti(shader, "u_texture_1", 0);
-	renderer_shader_seti(shader, "u_texture_2", 1);
+	Shader* shader = ogl_renderer->shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
+	ogl_renderer->shader_activate(shader);
+	ogl_renderer->shader_seti(shader, "u_texture_1", 0);
+	ogl_renderer->shader_seti(shader, "u_texture_2", 1);
 
 	/**
 	 * ===========================================================================================
@@ -268,9 +270,9 @@ int main(void) {
 		float time = glfwGetTime();
 		vec4 u_color = { (cos(time) / 2.f) + .5f, (sin(time) / 2.f) + .5f, 0.0f, 1.0f };
 
-		renderer_shader_set4fv(shader, "u_color", u_color);
-		renderer_shader_set4fm(shader, "u_view", camera_fetch_view(camera));
-		renderer_shader_set4fm(shader, "u_projection", camera_fetch_projection(camera));
+		ogl_renderer->shader_set4fv(shader, "u_color", u_color);
+		ogl_renderer->shader_set4fm(shader, "u_view", camera_get_view(camera));
+		ogl_renderer->shader_set4fm(shader, "u_projection", camera_get_projection(camera));
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture[0]);
@@ -284,7 +286,7 @@ int main(void) {
 			glm_translate(model, positions[i]);
 			float angle = 20 * i;
 			glm_rotate(model, glm_rad(angle), (vec3){ 1.0f, 0.3f, 0.5f });
-			renderer_shader_set4fm(shader, "u_model", (float*)model);
+			ogl_renderer->shader_set4fm(shader, "u_model", (float*)model);
 
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
@@ -292,7 +294,8 @@ int main(void) {
 		glBindVertexArray(0);
 	}
 
-	renderer_shader_destroy(shader);
+	ogl_renderer->shader_destroy(shader);
+	renderer_destroy(ogl_renderer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

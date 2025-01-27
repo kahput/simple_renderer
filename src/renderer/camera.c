@@ -56,9 +56,9 @@ void camera_update(Camera* camera, float camera_position[3], float camera_front[
 	glm_look(camera_position, camera_front, camera_up, camera->view_matrix);
 }
 
-float* camera_fetch_view(Camera* camera) {
+float* camera_get_view(Camera* camera) {
 	return (float*)camera->view_matrix;
 }
-float* camera_fetch_projection(Camera* camera) {
+float* camera_get_projection(Camera* camera) {
 	return (float*)camera->projection_matrix;
 }
