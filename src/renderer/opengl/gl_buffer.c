@@ -1,3 +1,4 @@
+#include "base.h"
 #include "renderer/gl_renderer.h"
 
 #include <glad/gl.h>
@@ -44,7 +45,7 @@ void opengl_buffer_destroy(struct _renderer* self, Buffer* buffer) {
 void opengl_buffer_activate(struct _renderer* self, const Buffer* buffer) {
 	OpenGLBuffer* gl_buffer = (OpenGLBuffer*)buffer;
 	if (!buffer) {
-		printf("ERROR: Invalid buffer passed to buffer_activate function!\n");
+		LOG_ERROR("Invalid buffer passed to buffer_activate function!");
 		exit(1);
 	}
 	switch (gl_buffer->usage) {
@@ -61,7 +62,7 @@ void opengl_buffer_activate(struct _renderer* self, const Buffer* buffer) {
 void opengl_buffer_deactivate(struct _renderer* self, const Buffer* buffer) {
 	OpenGLBuffer* gl_buffer = (OpenGLBuffer*)buffer;
 	if (!buffer) {
-		printf("ERROR: Invalid buffer passed to buffer_deactivate function!\n");
+		LOG_ERROR("Invalid buffer passed to buffer_deactivate function!");
 		exit(1);
 	}
 	switch (gl_buffer->usage) {

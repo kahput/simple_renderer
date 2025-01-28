@@ -1,11 +1,12 @@
 #include "renderer.h"
+#include "base.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 Renderer* renderer_create(RendererAPI backend, RendererCreateInfo* create_info) {
 	switch (backend) {
 		case BACKEND_API_NONE: {
-			printf("ERROR: None renderer not supported!\n");
+			LOG_ERROR("None renderer not supported!");
 			exit(1);
 		};
 		case BACKEND_API_OPENGL: {
@@ -15,7 +16,7 @@ Renderer* renderer_create(RendererAPI backend, RendererCreateInfo* create_info) 
 			return renderer_vulkan_create(create_info);
 		} break;
 		default: {
-			printf("ERROR: Unknown renderer!\n");
+			LOG_ERROR("Unknown renderer!");
 			exit(1);
 		} break;
 	};
@@ -24,7 +25,7 @@ void renderer_destroy(Renderer* renderer) {
 	if (renderer) {
 		switch (renderer->type) {
 			case BACKEND_API_NONE: {
-				printf("ERROR: None renderer not supported!\n");
+				LOG_ERROR("None renderer not supported!");
 				exit(1);
 			};
 			case BACKEND_API_OPENGL: {
@@ -36,7 +37,7 @@ void renderer_destroy(Renderer* renderer) {
 				free(renderer);
 			} break;
 			default: {
-				printf("ERROR: Unknown renderer!\n");
+				LOG_ERROR("Unknown renderer!");
 				exit(1);
 			} break;
 		};

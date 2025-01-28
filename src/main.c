@@ -1,3 +1,4 @@
+#include "base.h"
 #include "renderer.h"
 
 #define GLAD_GL_IMPLEMENTATION
@@ -33,16 +34,17 @@ int main(void) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "3D Noise", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Simple renderer", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
+	logger_set_level(LOG_LEVEL_DEBUG);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	glEnable(GL_DEPTH_TEST);
 
 	Renderer* gl_renderer = renderer_create(BACKEND_API_OPENGL, NULL);
-	// Renderer* vk_renderer = renderer_create(BACKEND_API_VULKAN, &(RendererCreateInfo){ .extension_info = glfwGetRequiredInstanceExtensions });
+	Renderer* vk_renderer = renderer_create(BACKEND_API_VULKAN, &(RendererCreateInfo){ .extension_info = glfwGetRequiredInstanceExtensions });
 
 	/**
 	 * ===========================================================================================
@@ -98,7 +100,7 @@ int main(void) {
 	const char* paths[] = { "assets/textures/container.jpg", "assets/textures/awesomeface.png" };
 	uint8_t* data = stbi_load(paths[0], &width, &height, &channel_count, 0);
 	if (!data) {
-		printf("ERROR:TEXTURE:FILE [ %s ] NOT_FOUND\n", paths[0]);
+		LOG_ERROR("TEXTURE:FILE [ %s ] NOT_FOUND", paths[0]);
 		return 1;
 	}
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -110,7 +112,7 @@ int main(void) {
 	glBindTexture(GL_TEXTURE_2D, texture[1]);
 	data = stbi_load(paths[1], &width, &height, &channel_count, 0);
 	if (!data) {
-		printf("ERROR:TEXTURE:FILE [ %s ] NOT_FOUND\n", paths[1]);
+		LOG_ERROR("TEXTURE:FILE [ %s ] NOT_FOUND", paths[1]);
 		return 1;
 	}
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -245,6 +247,7 @@ int main(void) {
 
 	gl_renderer->shader_destroy(shader);
 	renderer_destroy(gl_renderer);
+	renderer_destroy(vk_renderer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

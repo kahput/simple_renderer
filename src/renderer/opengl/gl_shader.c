@@ -1,3 +1,4 @@
+#include "base.h"
 #include "renderer/gl_renderer.h"
 
 #include <glad/gl.h>
@@ -14,7 +15,7 @@ Shader* opengl_shader_from_file(const char* vertex_shader_path, const char* frag
 	// Vertex shader
 	FILE* file_ptr = fopen(vertex_shader_path, "r");
 	if (!file_ptr) {
-		printf("ERROR:VERTEX:SHADER:FILE [ %s ] NOT_FOUND\n", vertex_shader_path);
+		LOG_ERROR("VERTEX:SHADER:FILE [ %s ] NOT_FOUND", vertex_shader_path);
 		return NULL;
 	}
 
@@ -29,7 +30,7 @@ Shader* opengl_shader_from_file(const char* vertex_shader_path, const char* frag
 	// Fragment shader
 	file_ptr = fopen(fragment_shader_path, "r");
 	if (!file_ptr) {
-		printf("ERROR:FRAGMENT:SHADER:FILE [ %s ] NOT_FOUND\n", fragment_shader_path);
+		LOG_ERROR("FRAGMENT:SHADER:FILE [ %s ] NOT_FOUND", fragment_shader_path);
 		return NULL;
 	}
 
@@ -56,7 +57,7 @@ Shader* opengl_shader_from_string(const char* vertex_shader_source, const char* 
 
 	if (!success) {
 		glGetShaderInfoLog(vertex_shader, 512, NULL, info_buffer);
-		printf("ERROR:SHADER:VERTEX:COMPILATION_FAILED | %s\n", info_buffer);
+		LOG_ERROR("SHADER:VERTEX:COMPILATION_FAILED | %s", info_buffer);
 		return NULL;
 	}
 
@@ -68,7 +69,7 @@ Shader* opengl_shader_from_string(const char* vertex_shader_source, const char* 
 
 	if (!success) {
 		glGetShaderInfoLog(fragment_shader, 512, NULL, info_buffer);
-		printf("ERROR:SHADER:FRAGMENT:COMPILATION_FAILED | %s\n", info_buffer);
+		LOG_ERROR("SHADER:FRAGMENT:COMPILATION_FAILED | %s", info_buffer);
 		return NULL;
 	}
 
@@ -79,7 +80,7 @@ Shader* opengl_shader_from_string(const char* vertex_shader_source, const char* 
 	glGetProgramiv(program, GL_LINK_STATUS, &success);
 	if (!success) {
 		glGetProgramInfoLog(program, 512, NULL, info_buffer);
-		printf("ERROR:SHADER:LINKING_FAILED | %s\n", info_buffer);
+		LOG_ERROR("SHADER:LINKING_FAILED | %s", info_buffer);
 		return NULL;
 	}
 

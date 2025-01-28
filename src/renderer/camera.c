@@ -1,3 +1,4 @@
+#include "base.h"
 #include "renderer.h"
 
 #include <cglm/cam.h>
@@ -50,7 +51,7 @@ void camera_update(Camera* camera, float camera_position[3], float camera_front[
 				camera->projection_dirty = false;
 			} break;
 			case PROJECTION_FRUSTUM: {
-				printf("WARNING: Camera projection not initialized!\n");
+				LOG_WARN("Camera projection not initialized!");
 			} break;
 		}
 	glm_look(camera_position, camera_front, camera_up, camera->view_matrix);
