@@ -42,4 +42,5 @@ void renderer_destroy(Renderer* renderer) {
 				exit(1);
 			} break;
 		};
-	}}
+	}
+}

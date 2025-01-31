@@ -1,19 +1,28 @@
 #include "renderer/gl_renderer.h"
 #include "renderer.h"
 
+#include <glad/gl.h>
 #include <stdlib.h>
 
-typedef struct _ogl_renderer {
+typedef struct _gl_renderer {
 	Renderer base;
+	uint32_t vao;
 } OpenGLRenderer;
 
-Renderer* opengl_renderer_create() {
-	OpenGLRenderer* renderer = malloc(sizeof(OpenGLRenderer));
+Renderer *opengl_renderer_create() {
+	OpenGLRenderer *renderer = malloc(sizeof(OpenGLRenderer));
 	renderer->base.backend = BACKEND_API_OPENGL;
+
+	glGenVertexArrays(1, &renderer->vao);
+	glBindVertexArray(renderer->vao);
+
+	// Drwa
+	renderer->base.draw = opengl_draw;
 
 	// Buffer -----------------------------------------------------
 	renderer->base.buffer_create = opengl_buffer_create;
 	renderer->base.buffer_destroy = opengl_buffer_destroy;
+	renderer->base.buffer_set_layout = opengl_buffer_set_layout;
 	renderer->base.buffer_activate = opengl_buffer_activate;
 	renderer->base.buffer_deactivate = opengl_buffer_deactivate;
 
@@ -35,6 +44,6 @@ Renderer* opengl_renderer_create() {
 	return &renderer->base;
 }
 
-void opengl_renderer_destroy(Renderer* renderer) {
+void opengl_renderer_destroy(Renderer *renderer) {
 	return;
 }

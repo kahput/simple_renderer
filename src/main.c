@@ -18,9 +18,9 @@
 #define Min(a, b) (((a) < (b)) ? a : b)
 #define Max(a, b) (((a) > (b)) ? a : b)
 
-void generate_cube_vertices(float* vertices);
+void generate_cube_vertices(float *vertices);
 
-void get_mouse_offset(GLFWwindow* window, float* x_offset, float* y_offset);
+void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset);
 
 int main(void) {
 	/**
@@ -34,7 +34,7 @@ int main(void) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Simple renderer", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Simple renderer", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
 	logger_set_level(LOG_LEVEL_DEBUG);
@@ -43,7 +43,7 @@ int main(void) {
 
 	glEnable(GL_DEPTH_TEST);
 
-	Renderer* gl_renderer = renderer_create(BACKEND_API_OPENGL);
+	Renderer *gl_renderer = renderer_create(BACKEND_API_OPENGL);
 
 	/**
 	 * ===========================================================================================
@@ -54,20 +54,12 @@ int main(void) {
 	generate_cube_vertices(vertices);
 
 	// Create vertex array object
-	uint32_t vertex_array_object = 0;
-	glGenVertexArrays(1, &vertex_array_object);
-	glBindVertexArray(vertex_array_object);
-	Buffer* vertex_buffer = gl_renderer->buffer_create(gl_renderer, BUFFER_TYPE_VERTEX, sizeof(vertices), vertices);
-
-	gl_renderer->buffer_activate(gl_renderer, vertex_buffer);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * (sizeof *vertices), (void*)NULL);
-	glEnableVertexAttribArray(0);
-
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * (sizeof *vertices), (void*)(3 * (sizeof *vertices)));
-	glEnableVertexAttribArray(1);
-
-	glBindVertexArray(0);
-	gl_renderer->buffer_deactivate(gl_renderer, vertex_buffer);
+	VertexAttribute attributes[] = {
+		{ .name = "position", .format = FORMAT_FLOAT3 },
+		{ .name = "uv", .format = FORMAT_FLOAT2 },
+	};
+	Buffer *vertex_buffer = gl_renderer->buffer_create(gl_renderer, BUFFER_TYPE_VERTEX, sizeof(vertices), vertices);
+	gl_renderer->buffer_set_layout(gl_renderer, vertex_buffer, attributes, 2);
 
 	/**
 	 * ===========================================================================================
@@ -89,8 +81,8 @@ int main(void) {
 	stbi_set_flip_vertically_on_load(true);
 
 	int32_t width, height, channel_count;
-	const char* paths[] = { "assets/textures/container.jpg", "assets/textures/awesomeface.png" };
-	uint8_t* data = stbi_load(paths[0], &width, &height, &channel_count, 0);
+	const char *paths[] = { "assets/textures/container.jpg", "assets/textures/awesomeface.png" };
+	uint8_t *data = stbi_load(paths[0], &width, &height, &channel_count, 0);
 	if (!data) {
 		LOG_ERROR("TEXTURE:FILE [ %s ] NOT_FOUND", paths[0]);
 		return 1;
@@ -118,7 +110,7 @@ int main(void) {
 	 * -------- Shader creation
 	 * ===========================================================================================
 	 **/
-	Shader* shader = gl_renderer->shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
+	Shader *shader = gl_renderer->shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
 	gl_renderer->shader_activate(shader);
 	gl_renderer->shader_seti(shader, "u_texture_1", 0);
 	gl_renderer->shader_seti(shader, "u_texture_2", 1);
@@ -159,7 +151,7 @@ int main(void) {
 	 * ===========================================================================================
 	 **/
 
-	Camera* camera = camera_create();
+	Camera *camera = camera_create();
 	camera_set_perspective(camera, glm_rad(45.0f), 0.1f, 100.f);
 
 	vec3 camera_position = { 0.f, 0.f, 5.0f },
@@ -223,28 +215,26 @@ int main(void) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture[1]);
 
-		glBindVertexArray(vertex_array_object);
 		for (int i = 0; i < (sizeof(positions) / sizeof *positions); i++) {
 			glm_mat4_identity(model);
 			glm_translate(model, positions[i]);
 			float angle = 20 * i;
 			glm_rotate(model, glm_rad(angle), (vec3){ 1.0f, 0.3f, 0.5f });
-			gl_renderer->shader_set4fm(shader, "u_model", (float*)model);
+			gl_renderer->shader_set4fm(shader, "u_model", (float *)model);
 
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			gl_renderer->draw(gl_renderer, vertex_buffer, 36);
 		}
-
-		glBindVertexArray(0);
 	}
 
 	gl_renderer->shader_destroy(shader);
+	gl_renderer->buffer_destroy(gl_renderer, vertex_buffer);
 	renderer_destroy(gl_renderer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
 }
 
-void get_mouse_offset(GLFWwindow* window, float* x_offset, float* y_offset) {
+void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset) {
 	static bool first_frame = true;
 	static double last_position_x = 0.0f, last_position_y = 0.0f;
 
@@ -265,7 +255,7 @@ void get_mouse_offset(GLFWwindow* window, float* x_offset, float* y_offset) {
 	last_position_y = current_position_y;
 }
 
-void generate_cube_vertices(float* vertices) {
+void generate_cube_vertices(float *vertices) {
 	int vertexIndex = 0;
 
 	// Define the positions of the cube corners relative to the center (0,0,0)
