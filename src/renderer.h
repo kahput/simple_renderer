@@ -12,11 +12,11 @@ typedef enum {
 } RendererAPI;
 
 typedef enum {
-	BUFFER_USAGE_VERTEX,
-	BUFFER_USAGE_INDEX,
+	BUFFER_TYPE_VERTEX,
+	BUFFER_TYPE_INDEX,
 
-	BUFFER_USAGE_COUNT
-} BufferUsage;
+	BUFFER_TYPE_COUNT
+} BufferType;
 
 typedef enum {
 	PROJECTION_PERSPECTIVE,
@@ -27,16 +27,6 @@ typedef enum {
 typedef void Shader;
 typedef void Buffer;
 typedef struct _camera Camera;
-
-typedef struct _renderer_create_info {
-	const char** (*extension_info)(uint32_t* count);
-} RendererCreateInfo;
-
-typedef struct _buffer_create_info {
-	BufferUsage usage;
-	size_t size;
-	void* data;
-} BufferCreateInfo;
 
 /*
  * ===========================================================================================
@@ -49,7 +39,7 @@ typedef struct _renderer {
 	void (*frame_end)(struct _renderer* self);
 
 	// Buffers
-	Buffer *(*buffer_create)(struct _renderer* self, const BufferCreateInfo* buffer);
+	Buffer* (*buffer_create)(struct _renderer* self, BufferType type, size_t size, void* data);
 	void (*buffer_destroy)(struct _renderer* self, Buffer* buffer);
 
 	void (*buffer_activate)(struct _renderer* self, const Buffer* buffer);
@@ -70,16 +60,11 @@ typedef struct _renderer {
 	void (*shader_set4fv)(Shader* shader, const char* name, float* value);
 	void (*shader_set4fm)(Shader* shader, const char* name, float* value);
 
-	RendererAPI type;
+	RendererAPI backend;
 } Renderer;
 
-Renderer* renderer_create(RendererAPI backend, RendererCreateInfo* create_info);
-Renderer* renderer_opengl_create();
-Renderer* renderer_vulkan_create(RendererCreateInfo* create_info);
-
+Renderer* renderer_create(RendererAPI backend);
 void renderer_destroy(Renderer* renderer);
-void renderer_opengl_destroy(Renderer* renderer);
-void renderer_vulkan_destroy(Renderer* renderer);
 
 /**
  * ===========================================================================================

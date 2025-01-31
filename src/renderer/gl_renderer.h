@@ -3,13 +3,16 @@
 
 #include <stdint.h>
 
+Renderer* opengl_renderer_create();
+void opengl_renderer_destroy(Renderer* renderer);
+
 /*
  * ===========================================================================================
  * -------- Buffer
  * ===========================================================================================
  **/
 
-Buffer* opengl_buffer_create(struct _renderer* self, const BufferCreateInfo* buffer);
+Buffer* opengl_buffer_create(struct _renderer* self, BufferType type, size_t size, void* data);
 void opengl_buffer_destroy(struct _renderer* self, Buffer* buffer);
 
 void opengl_buffer_activate(struct _renderer* self, const Buffer* buffer);

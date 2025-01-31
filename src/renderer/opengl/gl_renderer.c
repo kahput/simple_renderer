@@ -7,9 +7,9 @@ typedef struct _ogl_renderer {
 	Renderer base;
 } OpenGLRenderer;
 
-Renderer* renderer_opengl_create() {
+Renderer* opengl_renderer_create() {
 	OpenGLRenderer* renderer = malloc(sizeof(OpenGLRenderer));
-	renderer->base.type = BACKEND_API_OPENGL;
+	renderer->base.backend = BACKEND_API_OPENGL;
 
 	// Buffer -----------------------------------------------------
 	renderer->base.buffer_create = opengl_buffer_create;
@@ -35,6 +35,6 @@ Renderer* renderer_opengl_create() {
 	return &renderer->base;
 }
 
-void renderer_opengl_destroy(Renderer* renderer) {
+void opengl_renderer_destroy(Renderer* renderer) {
 	return;
 }

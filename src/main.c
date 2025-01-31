@@ -43,8 +43,7 @@ int main(void) {
 
 	glEnable(GL_DEPTH_TEST);
 
-	Renderer* gl_renderer = renderer_create(BACKEND_API_OPENGL, NULL);
-	Renderer* vk_renderer = renderer_create(BACKEND_API_VULKAN, &(RendererCreateInfo){ .extension_info = glfwGetRequiredInstanceExtensions });
+	Renderer* gl_renderer = renderer_create(BACKEND_API_OPENGL);
 
 	/**
 	 * ===========================================================================================
@@ -58,14 +57,7 @@ int main(void) {
 	uint32_t vertex_array_object = 0;
 	glGenVertexArrays(1, &vertex_array_object);
 	glBindVertexArray(vertex_array_object);
-
-	// Create Vertex buffer object
-	BufferCreateInfo buffer_info = {
-		.usage = BUFFER_USAGE_VERTEX,
-		.data = vertices,
-		.size = sizeof(vertices),
-	};
-	Buffer* vertex_buffer = gl_renderer->buffer_create(gl_renderer, &buffer_info);
+	Buffer* vertex_buffer = gl_renderer->buffer_create(gl_renderer, BUFFER_TYPE_VERTEX, sizeof(vertices), vertices);
 
 	gl_renderer->buffer_activate(gl_renderer, vertex_buffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * (sizeof *vertices), (void*)NULL);
@@ -247,7 +239,6 @@ int main(void) {
 
 	gl_renderer->shader_destroy(shader);
 	renderer_destroy(gl_renderer);
-	renderer_destroy(vk_renderer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

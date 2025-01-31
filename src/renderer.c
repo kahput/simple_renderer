@@ -1,45 +1,45 @@
 #include "renderer.h"
 #include "base.h"
-#include <stdio.h>
+#include "renderer/gl_renderer.h"
 #include <stdlib.h>
 
-Renderer* renderer_create(RendererAPI backend, RendererCreateInfo* create_info) {
+Renderer* renderer_create(RendererAPI backend) {
+	const char* backend_stringify[] = {
+		"None",
+		"OpenGL",
+		"Vulkan",
+	};
+
 	switch (backend) {
-		case BACKEND_API_NONE: {
-			LOG_ERROR("None renderer not supported!");
-			exit(1);
-		};
 		case BACKEND_API_OPENGL: {
-			return renderer_opengl_create();
+			return opengl_renderer_create();
 		} break;
-		case BACKEND_API_VULKAN: {
-			return renderer_vulkan_create(create_info);
-		} break;
+		case BACKEND_API_NONE:
+		case BACKEND_API_VULKAN:
 		default: {
-			LOG_ERROR("Unknown renderer!");
+			LOG_ERROR("Renderer %s is not supported at this moment!", backend_stringify[backend]);
 			exit(1);
 		} break;
 	};
 }
 void renderer_destroy(Renderer* renderer) {
+	const char* backend_stringify[] = {
+		"None",
+		"OpenGL",
+		"Vulkan",
+	};
+
 	if (renderer) {
-		switch (renderer->type) {
-			case BACKEND_API_NONE: {
-				LOG_ERROR("None renderer not supported!");
-				exit(1);
-			};
+		switch (renderer->backend) {
 			case BACKEND_API_OPENGL: {
-				renderer_opengl_destroy(renderer);
+				opengl_renderer_destroy(renderer);
 				free(renderer);
 			} break;
-			case BACKEND_API_VULKAN: {
-				renderer_vulkan_destroy(renderer);
-				free(renderer);
-			} break;
+			case BACKEND_API_NONE:
+			case BACKEND_API_VULKAN:
 			default: {
-				LOG_ERROR("Unknown renderer!");
+				LOG_ERROR("Renderer %s is not supported at this moment!", backend_stringify[renderer->backend]);
 				exit(1);
 			} break;
 		};
-	}
-}
+	}}
