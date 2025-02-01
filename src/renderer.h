@@ -40,6 +40,7 @@ typedef enum {
 
 typedef void Shader;
 typedef void Buffer;
+typedef void Texture;
 typedef struct _camera Camera;
 
 /*
@@ -61,6 +62,12 @@ typedef struct _renderer {
 
 	void (*buffer_activate)(struct _renderer *self, const Buffer *buffer);
 	void (*buffer_deactivate)(struct _renderer *self, const Buffer *buffer);
+
+	// Textures
+	Texture *(*texture_load)(struct _renderer *self, const char *texture_path);
+	void (*texture_destroy)(struct _renderer *self, Texture *texture);
+
+	void (*texture_activate)(struct _renderer *self, Texture *texture, uint32_t texture_unit);
 
 	// Shaders
 	Shader *(*shader_from_file)(const char *vertex_shader_path, const char *fragment_shader_path, const char *geometry_shader_source);

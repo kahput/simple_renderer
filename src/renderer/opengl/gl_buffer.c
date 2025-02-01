@@ -1,28 +1,10 @@
+#include "gl_types.h"
 #include "base.h"
-#include "renderer.h"
-#include "renderer/gl_renderer.h"
 
 #include <glad/gl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-typedef struct _gl_vertex_attribute {
-	const char *name;
-	AttributeFormat format;
-	uint32_t location, offset;
-} OpenGLVertexAttribute;
-
-typedef struct {
-	OpenGLVertexAttribute *attributes;
-	uint32_t count, stride;
-} OpenGLVertexLayout;
-
-typedef struct _gl_buffer {
-	uint32_t id, type; // Buffer id
-	uint32_t vertex_count, triangle_count;
-	OpenGLVertexLayout layout;
-} OpenGLBuffer;
 
 static inline size_t attribute_format_to_bytes(AttributeFormat attribute_format);
 static inline uint32_t attribute_format_to_count(AttributeFormat attribute_format);

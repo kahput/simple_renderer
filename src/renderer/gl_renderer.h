@@ -23,6 +23,17 @@ void opengl_buffer_deactivate(struct _renderer *self, const Buffer *buffer);
 
 /*
  * ===========================================================================================
+ * -------- Texture
+ * ===========================================================================================
+ **/
+
+Texture *opengl_texture_load(struct _renderer *self, const char *texture_path);
+void opengl_texture_destroy(struct _renderer *self, Texture *texture);
+
+void opengl_texture_activate(struct _renderer *self, Texture *texture, uint32_t texture_unit);
+
+/*
+ * ===========================================================================================
  * -------- Shader
  * ===========================================================================================
  **/

@@ -27,6 +27,11 @@ Renderer *opengl_renderer_create() {
 	renderer->base.buffer_deactivate = opengl_buffer_deactivate;
 
 	// Shader -----------------------------------------------------
+	renderer->base.texture_load = opengl_texture_load;
+	renderer->base.texture_destroy = opengl_texture_destroy;
+	renderer->base.texture_activate = opengl_texture_activate;
+
+	// Shader -----------------------------------------------------
 	renderer->base.shader_from_file = opengl_shader_from_file;
 	renderer->base.shader_from_string = opengl_shader_from_string;
 	renderer->base.shader_destroy = opengl_shader_destroy;

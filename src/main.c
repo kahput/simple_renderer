@@ -10,7 +10,6 @@
 #include <stb/stb_image.h>
 
 #include <stdint.h>
-#include <stdio.h>
 
 #define WINDOW_WIDTH  800
 #define WINDOW_HEIGHT 600
@@ -19,6 +18,7 @@
 #define Max(a, b) (((a) > (b)) ? a : b)
 
 void generate_cube_vertices(float *vertices);
+void generate_plane_vertices(uint32_t size, uint32_t sub_division, float *vertices, uint32_t *indices);
 
 void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset);
 
@@ -40,6 +40,7 @@ int main(void) {
 	logger_set_level(LOG_LEVEL_DEBUG);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	stbi_set_flip_vertically_on_load(true);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -55,8 +56,8 @@ int main(void) {
 
 	// Create vertex array object
 	VertexAttribute attributes[] = {
-		{ .name = "position", .format = FORMAT_FLOAT3 },
-		{ .name = "uv", .format = FORMAT_FLOAT2 },
+		{ .name = "a_position", .format = FORMAT_FLOAT3 },
+		{ .name = "a_uv", .format = FORMAT_FLOAT2 },
 	};
 	Buffer *vertex_buffer = gl_renderer->buffer_create(gl_renderer, BUFFER_TYPE_VERTEX, sizeof(vertices), vertices);
 	gl_renderer->buffer_set_layout(gl_renderer, vertex_buffer, attributes, 2);
@@ -67,43 +68,9 @@ int main(void) {
 	 * ===========================================================================================
 	 **/
 
-	uint32_t texture[2];
-	glGenTextures(2, texture);
-
-	// First texture
-	glBindTexture(GL_TEXTURE_2D, texture[0]);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	stbi_set_flip_vertically_on_load(true);
-
-	int32_t width, height, channel_count;
 	const char *paths[] = { "assets/textures/container.jpg", "assets/textures/awesomeface.png" };
-	uint8_t *data = stbi_load(paths[0], &width, &height, &channel_count, 0);
-	if (!data) {
-		LOG_ERROR("TEXTURE:FILE [ %s ] NOT_FOUND", paths[0]);
-		return 1;
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	stbi_image_free(data);
-
-	// Second texture
-	glBindTexture(GL_TEXTURE_2D, texture[1]);
-	data = stbi_load(paths[1], &width, &height, &channel_count, 0);
-	if (!data) {
-		LOG_ERROR("TEXTURE:FILE [ %s ] NOT_FOUND", paths[1]);
-		return 1;
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	stbi_image_free(data);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	Texture *texture0 = gl_renderer->texture_load(gl_renderer, paths[0]);
+	Texture *texture1 = gl_renderer->texture_load(gl_renderer, paths[1]);
 
 	/**
 	 * ===========================================================================================
@@ -209,11 +176,8 @@ int main(void) {
 		gl_renderer->shader_set4fm(shader, "u_view", camera_get_view(camera));
 		gl_renderer->shader_set4fm(shader, "u_projection", camera_get_projection(camera));
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture[0]);
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture[1]);
+		gl_renderer->texture_activate(gl_renderer, texture0, 0);
+		gl_renderer->texture_activate(gl_renderer, texture1, 1);
 
 		for (int i = 0; i < (sizeof(positions) / sizeof *positions); i++) {
 			glm_mat4_identity(model);
@@ -235,16 +199,17 @@ int main(void) {
 }
 
 void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset) {
-	static bool first_frame = true;
+	static uint32_t current_frame = 0;
 	static double last_position_x = 0.0f, last_position_y = 0.0f;
 
 	double current_position_x, current_position_y;
 	glfwGetCursorPos(window, &current_position_x, &current_position_y);
 
-	if (first_frame) {
-		last_position_x = current_position_x;
-		last_position_y = current_position_y;
-		first_frame = false;
+	if (current_frame == 0) {
+		LOG_INFO("Frame [ %d ]: (%.2f, %.2f)", current_frame, current_position_x, current_position_y);
+		last_position_x = WINDOW_WIDTH / 2.f;
+		last_position_y = WINDOW_HEIGHT / 2.f;
+		current_frame++;
 		return;
 	}
 
@@ -253,6 +218,24 @@ void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset) {
 
 	last_position_x = current_position_x;
 	last_position_y = current_position_y;
+}
+
+void generate_plane_vertices(uint32_t size, uint32_t sub_division, float *vertices, uint32_t *indices) {
+	for (uint32_t z = 0, index = 0; z < sub_division; z++) {
+		for (uint32_t x = 0; x < sub_division; x++) {
+			// Position
+			vertices[index++] = -size / 2.f + x * ((float)size / sub_division);
+			vertices[index++] = 0.0f;
+			vertices[index++] = -size / 2.f + z * ((float)size / sub_division);
+
+			// UV
+			vertices[index++] = (float)x / sub_division;
+			vertices[index++] = (float)z / sub_division;
+
+			if (x < sub_division - 1 && z < sub_division - 1) {
+			}
+		}
+	}
 }
 
 void generate_cube_vertices(float *vertices) {
