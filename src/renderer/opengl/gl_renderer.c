@@ -18,6 +18,7 @@ Renderer *opengl_renderer_create() {
 
 	// Drwa
 	renderer->base.draw = opengl_draw;
+	renderer->base.draw_indexed = opengl_draw_indexed;
 
 	// Buffer -----------------------------------------------------
 	renderer->base.buffer_create = opengl_buffer_create;

@@ -1,5 +1,5 @@
-#include "gl_types.h"
 #include "base.h"
+#include "gl_types.h"
 
 #include <glad/gl.h>
 #include <stdint.h>
@@ -39,6 +39,40 @@ void opengl_draw(struct _renderer *self, Buffer *vertex_buffer, uint32_t vertex_
 		glDisableVertexAttribArray(i);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void opengl_draw_indexed(struct _renderer *self, Buffer *vertex_buffer, Buffer *index_buffer, uint32_t element_count) {
+	if (vertex_buffer == NULL || index_buffer == NULL) {
+		LOG_ERROR("Invalid buffer(s) passed to draw_indexed function!");
+		return;
+	}
+	OpenGLBuffer *gl_buffer = (OpenGLBuffer *)vertex_buffer;
+
+	if (gl_buffer->layout.attributes == NULL) {
+		LOG_ERROR("Can't use vertex buffer without layout!");
+		return;
+	}
+
+	self->buffer_activate(self, vertex_buffer);
+	const OpenGLVertexLayout *layout = &gl_buffer->layout;
+	for (uint32_t i = 0; i < layout->count; i++) {
+		const OpenGLVertexAttribute *attribute = &layout->attributes[i];
+		GLenum type = attribute_format_to_gl_type(attribute->format);
+		uint32_t count = attribute_format_to_count(attribute->format);
+
+		glEnableVertexAttribArray(i);
+		glVertexAttribPointer(i, count, type, GL_FALSE, layout->stride, (void *)(uintptr_t)attribute->offset);
+	}
+
+	self->buffer_activate(self, index_buffer);
+
+	glDrawElements(GL_TRIANGLES, element_count, GL_UNSIGNED_INT, NULL);
+
+	for (uint32_t i = 0; i < layout->count; i++) {
+		glDisableVertexAttribArray(i);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 Buffer *opengl_buffer_create(struct _renderer *self, BufferType type, size_t size, void *data) {

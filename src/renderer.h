@@ -54,6 +54,7 @@ typedef struct _renderer {
 	void (*frame_end)(struct _renderer *self);
 
 	void (*draw)(struct _renderer *self, Buffer *vertex_buffer, uint32_t vertex_count);
+	void (*draw_indexed)(struct _renderer *self, Buffer *vertex_buffer, Buffer *index_buffer, uint32_t element_count);
 
 	// Buffers
 	Buffer *(*buffer_create)(struct _renderer *self, BufferType type, size_t size, void *data);
