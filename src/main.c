@@ -113,12 +113,14 @@ int main(void) {
 	vec3 camera_position = { 0.f, 5.f, 5.0f },
 		 camera_up = { 0.0f, 1.0f, 0.0f }, camera_front = { 0.0f, 0.0f, -1.0f }, camera_right = { 1.0f, 0.0f, 0.0f };
 	float yaw = -90.0f, pitch = 0.0f;
-	float camera_speed = 5.0f;
+	const float camera_speed = 10.0f, camera_sensitivity = 4.f;
 
 	float delta_time = 0.0f;
 	float last_frame = 0.0f;
 
 	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+
 		float current_frame = glfwGetTime();
 		delta_time = current_frame - last_frame;
 		last_frame = current_frame;
@@ -126,18 +128,13 @@ int main(void) {
 		float x_offset = 0.0f, y_offset = 0.0f;
 		get_mouse_offset(window, &x_offset, &y_offset);
 
-		const float sensitivity = 4.f;
-
-		yaw += x_offset * delta_time * sensitivity;
-		pitch += y_offset * delta_time * sensitivity;
+		yaw += x_offset * delta_time * camera_sensitivity;
+		pitch += y_offset * delta_time * camera_sensitivity;
 		pitch = Max(-89.0f, Min(89.0f, pitch));
-
-		glfwPollEvents();
-		glfwSwapBuffers(window);
 
 		vec3 camera_movement = {
 			(glfwGetKey(window, GLFW_KEY_D) % 2) - (glfwGetKey(window, GLFW_KEY_A) % 2),
-			0.0f,
+			(glfwGetKey(window, GLFW_KEY_SPACE) % 2) - (glfwGetKey(window, GLFW_KEY_CAPS_LOCK) % 2),
 			(glfwGetKey(window, GLFW_KEY_W) % 2) - (glfwGetKey(window, GLFW_KEY_S) % 2)
 		};
 
@@ -151,6 +148,7 @@ int main(void) {
 		glm_normalize(camera_right);
 
 		glm_vec3_muladds(camera_right, camera_movement[0] * delta_time * camera_speed, camera_position);
+		glm_vec3_muladds(camera_up, camera_movement[1] * delta_time * camera_speed, camera_position);
 		glm_vec3_muladds(camera_front, camera_movement[2] * delta_time * camera_speed, camera_position);
 
 		camera_update(camera, camera_position, camera_front, camera_up);
@@ -166,6 +164,8 @@ int main(void) {
 		// gl_renderer->texture_activate(gl_renderer, texture0, 0);
 		// gl_renderer->texture_activate(gl_renderer, texture1, 1);
 		gl_renderer->draw_indexed(gl_renderer, vertex_buffer, index_buffer, ((SUB_DIVISION + 1) * (SUB_DIVISION + 1)) * 6);
+
+		glfwSwapBuffers(window);
 	}
 
 	gl_renderer->shader_destroy(shader);
