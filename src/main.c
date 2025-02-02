@@ -1,5 +1,6 @@
 #include "base.h"
 #include "renderer.h"
+#include <cglm/vec3.h>
 
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/gl.h>
@@ -7,14 +8,15 @@
 #include <GLFW/glfw3.h>
 #include <cglm/affine-mat.h>
 #include <cglm/cglm.h>
+#include <fnl/FastNoiseLite.h>
 #include <stb/stb_image.h>
 
 #include <stdint.h>
 
-#define WINDOW_WIDTH  800
-#define WINDOW_HEIGHT 600
-#define PLANE_SIZE	  100
-#define SUB_DIVISION  64
+#define WINDOW_WIDTH  1280
+#define WINDOW_HEIGHT 720
+#define PLANE_SIZE	  1000
+#define SUB_DIVISION  256
 
 #define Min(a, b) (((a) < (b)) ? a : b)
 #define Max(a, b) (((a) > (b)) ? a : b)
@@ -26,6 +28,7 @@ void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset);
 int main(void) {
 	glfwInit();
 
+	glfwWindowHint(GLFW_RESIZABLE, false);
 	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Simple renderer", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	gladLoadGL(glfwGetProcAddress);
@@ -71,11 +74,11 @@ int main(void) {
 
 	// Camera
 	Camera *camera = camera_create();
-	camera_set_perspective(camera, glm_rad(45.0f), 0.1f, 100.f);
+	camera_set_perspective(camera, glm_rad(45.0f), 0.1f, (PLANE_SIZE * 3));
 
-	vec3 camera_position = { 0.f, 5.f, 5.0f }, camera_up = { 0.0f, 1.0f, 0.0f }, camera_front = { 0.0f, 0.0f, -1.0f }, camera_right = { 1.0f, 0.0f, 0.0f };
-	float yaw = -90.0f, pitch = 0.0f;
-	const float camera_speed = 10.0f, camera_sensitivity = 4.f;
+	vec3 camera_position = { 0.f, 5.f, 100.0f }, camera_target = { 0.0f, 0.0f, 0.0f };
+	float yaw = 0.0f, pitch = 45.0f;
+	const float camera_sensitivity = 4.f;
 
 	float delta_time = 0.0f;
 	float last_frame = 0.0f;
@@ -91,27 +94,18 @@ int main(void) {
 		get_mouse_offset(window, &x_offset, &y_offset);
 
 		yaw += x_offset * delta_time * camera_sensitivity;
+		yaw = yaw > 360.f ? 0.f : yaw < 0.0f ? 360.f
+											 : yaw;
 		pitch += y_offset * delta_time * camera_sensitivity;
-		pitch = Max(-89.0f, Min(89.0f, pitch));
+		pitch = Max(5.0f, Min(105.0f, pitch));
 
-		vec3 camera_movement = {
-			(glfwGetKey(window, GLFW_KEY_D) % 2) - (glfwGetKey(window, GLFW_KEY_A) % 2),
-			(glfwGetKey(window, GLFW_KEY_SPACE) % 2) - (glfwGetKey(window, GLFW_KEY_CAPS_LOCK) % 2),
-			(glfwGetKey(window, GLFW_KEY_W) % 2) - (glfwGetKey(window, GLFW_KEY_S) % 2)
-		};
+		camera_position[0] = (PLANE_SIZE * 1.25f) * cos(glm_rad(yaw)) * sin(glm_rad(pitch));
+		camera_position[1] = (PLANE_SIZE * 1.25f) * cos(glm_rad(pitch));
+		camera_position[2] = (PLANE_SIZE * 1.25f) * sin(glm_rad(yaw)) * sin(glm_rad(pitch));
 
-		camera_front[0] = cos(glm_rad(yaw)) * cos(glm_rad(pitch));
-		camera_front[1] = sin(glm_rad(pitch));
-		camera_front[2] = sin(glm_rad(yaw)) * cos(glm_rad(pitch));
-
-		glm_cross(camera_front, camera_up, camera_right);
-		glm_normalize(camera_right);
-
-		glm_vec3_muladds(camera_right, camera_movement[0] * delta_time * camera_speed, camera_position);
-		glm_vec3_muladds(camera_up, camera_movement[1] * delta_time * camera_speed, camera_position);
-		glm_vec3_muladds(camera_front, camera_movement[2] * delta_time * camera_speed, camera_position);
-
-		camera_update(camera, camera_position, camera_front, camera_up);
+		glm_vec3_scale(camera_target, 0, camera_target);
+		glm_vec3_sub(camera_target, camera_position, camera_target);
+		camera_update(camera, camera_position, camera_target, (vec3){ 0.0f, 1.0f, 0.0f });
 
 		glClearColor(0.95f, .95f, .95f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -139,7 +133,7 @@ int main(void) {
 }
 
 void window_resize(GLFWwindow *window, int width, int height) {
-	Renderer *renderer = (Renderer*)glfwGetWindowUserPointer(window);
+	Renderer *renderer = (Renderer *)glfwGetWindowUserPointer(window);
 
 	renderer->on_resize(renderer, width, height);
 }
@@ -171,12 +165,17 @@ void generate_plane_vertices(float size, uint32_t sub_division, float *vertices,
 	quad_count = sub_division + 1;
 	uint32_t vertices_ptr = 0, indices_ptr = 0;
 
+	fnl_state noise_parameters = fnlCreateState();
+	noise_parameters.noise_type = FNL_NOISE_PERLIN;
+	noise_parameters.fractal_type = FNL_FRACTAL_RIDGED;
+	noise_parameters.octaves = 3;
+
 	for (uint32_t z = 0; z < rows; z++) {
 		for (uint32_t x = 0; x < columns; x++) {
 			uint32_t index = x + z * columns;
 			// Position
 			vertices[vertices_ptr++] = -size / 2.f + x * ((float)size / quad_count);
-			vertices[vertices_ptr++] = 0.0f;
+			vertices[vertices_ptr++] = (fnlGetNoise2D(&noise_parameters, x * .5f, z * .5f)) * 200;
 			vertices[vertices_ptr++] = -size / 2.f + z * ((float)size / quad_count);
 
 			// UV
