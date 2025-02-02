@@ -6,6 +6,8 @@
 Renderer *opengl_renderer_create();
 void opengl_renderer_destroy(Renderer *renderer);
 
+void opengl_on_resize(struct _renderer *self, int width, int height);
+
 void opengl_draw(struct _renderer *self, Buffer *vertex_buffer, uint32_t vertex_count);
 void opengl_draw_indexed(struct _renderer *self, Buffer *vertex_buffer, Buffer *index_buffer, uint32_t element_count);
 /*

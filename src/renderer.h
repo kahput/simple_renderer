@@ -50,6 +50,8 @@ typedef struct _camera Camera;
  **/
 
 typedef struct _renderer {
+	void (*on_resize)(struct _renderer *self, int width, int height);
+
 	void (*frame_begin)(struct _renderer *self);
 	void (*frame_end)(struct _renderer *self);
 

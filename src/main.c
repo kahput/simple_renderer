@@ -19,20 +19,12 @@
 #define Min(a, b) (((a) < (b)) ? a : b)
 #define Max(a, b) (((a) > (b)) ? a : b)
 
+void window_resize(GLFWwindow *window, int width, int height);
 void generate_plane_vertices(float size, uint32_t sub_division, float *vertices, uint32_t *indices);
 void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset);
 
 int main(void) {
-	/**
-	 * ===========================================================================================
-	 * -------- Window creation
-	 * ===========================================================================================
-	 **/
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Simple renderer", NULL, NULL);
 	glfwMakeContextCurrent(window);
@@ -46,17 +38,14 @@ int main(void) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	Renderer *gl_renderer = renderer_create(BACKEND_API_OPENGL);
+	glfwSetWindowUserPointer(window, gl_renderer);
+	glfwSetWindowSizeCallback(window, window_resize);
 
-	/**
-	 * ===========================================================================================
-	 * -------- Vertex array object creation
-	 * ===========================================================================================
-	 **/
+	// Vertex data
 	float vertices[((SUB_DIVISION + 2) * (SUB_DIVISION + 2)) * 5];
 	uint32_t indices[((SUB_DIVISION + 1) * (SUB_DIVISION + 1)) * 6];
 	generate_plane_vertices(PLANE_SIZE, SUB_DIVISION, vertices, indices);
 
-	// Create vertex array object
 	VertexAttribute attributes[] = {
 		{ .name = "a_position", .format = FORMAT_FLOAT3 },
 		{ .name = "a_uv", .format = FORMAT_FLOAT2 },
@@ -65,53 +54,26 @@ int main(void) {
 	gl_renderer->buffer_set_layout(gl_renderer, vertex_buffer, attributes, 2);
 	Buffer *index_buffer = gl_renderer->buffer_create(gl_renderer, BUFFER_TYPE_INDEX, sizeof(indices), indices);
 
-	/**
-	 * ===========================================================================================
-	 * -------- Texture creation
-	 * ===========================================================================================
-	 **/
-
+	// Textures
 	const char *paths[] = { "assets/textures/container.jpg", "assets/textures/awesomeface.png" };
 	Texture *texture0 = gl_renderer->texture_load(gl_renderer, paths[0]);
 	Texture *texture1 = gl_renderer->texture_load(gl_renderer, paths[1]);
 
-	/**
-	 * ===========================================================================================
-	 * -------- Shader creation
-	 * ===========================================================================================
-	 **/
+	// Shader
 	Shader *shader = gl_renderer->shader_from_file("assets/shaders/vertex_shader.glsl", "assets/shaders/fragment_shader.glsl", NULL);
 	gl_renderer->shader_activate(shader);
 	gl_renderer->shader_seti(shader, "u_texture_1", 0);
 	gl_renderer->shader_seti(shader, "u_texture_2", 1);
 
-	/**
-	 * ===========================================================================================
-	 * -------- Math
-	 * ===========================================================================================
-	 **/
-
-	mat4 model, view, projection;
-
+	// MVP matrices
+	mat4 model;
 	glm_mat4_identity(model);
 
-	glm_mat4_identity(view);
-	glm_translate(view, (vec3){ 0.0f, 0.0f, -5.0f });
-
-	glm_mat4_identity(projection);
-	glm_perspective(glm_rad(45.f), (float)WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f, projection);
-
-	/**
-	 * ===========================================================================================
-	 * -------- Camera
-	 * ===========================================================================================
-	 **/
-
+	// Camera
 	Camera *camera = camera_create();
 	camera_set_perspective(camera, glm_rad(45.0f), 0.1f, 100.f);
 
-	vec3 camera_position = { 0.f, 5.f, 5.0f },
-		 camera_up = { 0.0f, 1.0f, 0.0f }, camera_front = { 0.0f, 0.0f, -1.0f }, camera_right = { 1.0f, 0.0f, 0.0f };
+	vec3 camera_position = { 0.f, 5.f, 5.0f }, camera_up = { 0.0f, 1.0f, 0.0f }, camera_front = { 0.0f, 0.0f, -1.0f }, camera_right = { 1.0f, 0.0f, 0.0f };
 	float yaw = -90.0f, pitch = 0.0f;
 	const float camera_speed = 10.0f, camera_sensitivity = 4.f;
 
@@ -138,8 +100,6 @@ int main(void) {
 			(glfwGetKey(window, GLFW_KEY_W) % 2) - (glfwGetKey(window, GLFW_KEY_S) % 2)
 		};
 
-		glm_mat4_identity(view);
-
 		camera_front[0] = cos(glm_rad(yaw)) * cos(glm_rad(pitch));
 		camera_front[1] = sin(glm_rad(pitch));
 		camera_front[2] = sin(glm_rad(yaw)) * cos(glm_rad(pitch));
@@ -161,8 +121,8 @@ int main(void) {
 		gl_renderer->shader_set4fm(shader, "u_view", camera_get_view(camera));
 		gl_renderer->shader_set4fm(shader, "u_projection", camera_get_projection(camera));
 
-		// gl_renderer->texture_activate(gl_renderer, texture0, 0);
-		// gl_renderer->texture_activate(gl_renderer, texture1, 1);
+		gl_renderer->texture_activate(gl_renderer, texture0, 0);
+		gl_renderer->texture_activate(gl_renderer, texture1, 1);
 		gl_renderer->draw_indexed(gl_renderer, vertex_buffer, index_buffer, ((SUB_DIVISION + 1) * (SUB_DIVISION + 1)) * 6);
 
 		glfwSwapBuffers(window);
@@ -170,10 +130,18 @@ int main(void) {
 
 	gl_renderer->shader_destroy(shader);
 	gl_renderer->buffer_destroy(gl_renderer, vertex_buffer);
+	gl_renderer->texture_destroy(gl_renderer, texture0);
+	gl_renderer->texture_destroy(gl_renderer, texture1);
 	renderer_destroy(gl_renderer);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
+}
+
+void window_resize(GLFWwindow *window, int width, int height) {
+	Renderer *renderer = (Renderer*)glfwGetWindowUserPointer(window);
+
+	renderer->on_resize(renderer, width, height);
 }
 
 void get_mouse_offset(GLFWwindow *window, float *x_offset, float *y_offset) {

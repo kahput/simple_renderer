@@ -9,6 +9,10 @@ typedef struct _gl_renderer {
 	uint32_t vao;
 } OpenGLRenderer;
 
+void opengl_on_resize(struct _renderer *self, int width, int height) {
+	glViewport(0, 0, width, height);
+}
+
 Renderer *opengl_renderer_create() {
 	OpenGLRenderer *renderer = malloc(sizeof(OpenGLRenderer));
 	renderer->base.backend = BACKEND_API_OPENGL;
@@ -19,6 +23,8 @@ Renderer *opengl_renderer_create() {
 	// Drwa
 	renderer->base.draw = opengl_draw;
 	renderer->base.draw_indexed = opengl_draw_indexed;
+
+	renderer->base.on_resize = opengl_on_resize;
 
 	// Buffer -----------------------------------------------------
 	renderer->base.buffer_create = opengl_buffer_create;
